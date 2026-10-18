@@ -37,7 +37,6 @@ async function apiClient(email: string) {
 
 test('user A: data created in the app is saved to Supabase and survives reload', async ({ browser }) => {
   const page = await signUp(browser, userA);
-  console.log(`run=${run} userA=${userA} userB=${userB}`);
 
   await page.goto('/#/servers');
   await page.getByRole('button', { name: 'Add server' }).click();
