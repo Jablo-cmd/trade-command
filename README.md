@@ -115,7 +115,7 @@ Last run: 2026-10-18 against the owner's project, 2/2 passed.
 
 ## Hosting
 
-Production is static files on Apache at `trade.aurisnexus.co.za` (HostAfrica cPanel). See [docs/DEPLOY_HOSTAFRICA.md](docs/DEPLOY_HOSTAFRICA.md) for the build, subdomain, SSL, Supabase Auth URL and upload steps.
+Production runs on GitHub Pages at `trade.aurisnexus.co.za`. Every push to `main` is checked, built and deployed by `.github/workflows/pages.yml`. See [docs/DEPLOY.md](docs/DEPLOY.md) for the one-time setup: visibility, Pages, DNS at HostAfrica, custom domain and Supabase Auth URLs.
 
 ## Security model (summary, details in [docs/SECURITY.md](docs/SECURITY.md))
 
