@@ -15,7 +15,7 @@ create extension if not exists pgcrypto;
 -- ---------------------------------------------------------------------------
 
 create or replace function public.set_updated_at() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   new.updated_at := now();
   return new;
@@ -140,7 +140,7 @@ create table public.trading_accounts (
 
 -- V1 limit: 40 accounts per user. Serialised per user with an advisory lock.
 create or replace function public.enforce_account_limit() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   perform pg_advisory_xact_lock(hashtext('trading_accounts:' || new.user_id::text));
   if (select count(*) from public.trading_accounts where user_id = new.user_id) >= 40 then
@@ -155,7 +155,7 @@ create trigger trading_accounts_limit before insert on public.trading_accounts
 
 -- Clients may not claim a broker connection; only the backend (service role) can.
 create or replace function public.protect_connection_status() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   if current_user in ('authenticated', 'anon')
      and new.connection_status in ('connected','unverified','unauthorized','disconnected')
@@ -380,7 +380,7 @@ create table public.audit_events (
 
 -- Reject obviously sensitive keys in audit/execution payloads (defence in depth; clients also redact).
 create or replace function public.reject_sensitive_payload() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 declare
   doc jsonb := to_jsonb(new) -> (case when tg_table_name = 'audit_events' then 'details' else 'payload' end);
 begin

@@ -20,7 +20,7 @@ Private, mobile-first trading operations console for managing **up to 40 of the 
 | Prop-firm compatibility profiles (9 rule items, source + date required) | **Functional**: all rules default to *unknown*, which blocks live execution |
 | Order submission, fills, partial fills, cancellation, TP modification, reconciliation, emergency disable | **Simulation only** (labelled simulator) |
 | MT5 execution | **Blocked**: interface + "unavailable" provider only (see [docs/MT5_CONNECTOR.md](docs/MT5_CONNECTOR.md)) |
-| Supabase Auth + Postgres persistence | **Implemented, not connected**: schema and RLS tested on local PostgreSQL; the adapter is unit-tested against a fake client and has not been run against a live project |
+| Supabase Auth + Postgres persistence | **Schema deployed** to the owner's project (17 tables, RLS on all). The schema and RLS are tested on local PostgreSQL, and the adapter is unit-tested against a fake client. The app has not yet been exercised end-to-end against the live project. |
 | Audit log (credential redaction, append-only in DB) | **Functional** |
 | PWA (manifest + app-shell service worker) | **Functional** (production build) |
 
@@ -90,7 +90,7 @@ Copy `.env.example` to `.env.local`. Never commit real values.
 
 ## Supabase setup (when you choose to)
 
-Nothing in this repository has been applied to a Supabase project.
+Migrations 0001–0003 have been applied to the owner's dedicated "Trade Command" project (`wdnuqkwrkpuazuulipuh`, applied 2026-10-18). For a new project:
 
 1. Create a project (a free tier is sufficient for development) and enable email/password auth.
 2. Apply the migrations in order. With the Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`. Alternatively, paste `supabase/migrations/*.sql` into the SQL editor in filename order. **Do not** run `supabase/tests/00_local_supabase_shim.sql` against Supabase; it only emulates `auth` locally.
