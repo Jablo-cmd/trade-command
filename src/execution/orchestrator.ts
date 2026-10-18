@@ -36,6 +36,8 @@ export interface OrchestratorDeps {
   now: () => string;
   audit: (e: AuditEvent) => void;
   tickSizeFor: (accountId: string, symbol: string) => number;
+  /** Human-readable account name for audit messages (keys stay in entityId). */
+  accountName?: (accountId: string) => string;
 }
 
 export class ExecutionOrchestrator {
@@ -49,6 +51,11 @@ export class ExecutionOrchestrator {
         simulated: this.d.provider.info.simulated,
       }),
     );
+  }
+
+  private label(o: Pick<Order, 'accountId' | 'type' | 'limitPrice'>): string {
+    const name = this.d.accountName?.(o.accountId) ?? `account …${o.accountId.slice(-6)}`;
+    return `${name} ${o.type.replace('_', ' ')} @ ${o.limitPrice}`;
   }
 
   private guardProvider(): string | undefined {
@@ -159,7 +166,7 @@ export class ExecutionOrchestrator {
       const remote = po.value.find((r) => r.clientOrderId === o.clientOrderId);
       if (!remote) return o;
       const next = this.advance({ ...o, filledVolume: remote.filledVolume, providerOrderId: remote.providerOrderId }, remote.state, remote.rejectReason);
-      if (next.state !== o.state) this.log('order', 'state_changed', `${o.clientOrderId}: ${o.state} → ${next.state}.`, o.clientOrderId);
+      if (next.state !== o.state) this.log('order', 'state_changed', `${this.label(o)}: ${o.state} → ${next.state}.`, o.clientOrderId);
       return { ...next, stopLoss: remote.stopLoss, takeProfit: remote.takeProfit };
     });
 
@@ -169,7 +176,7 @@ export class ExecutionOrchestrator {
       const o = orders.find((x) => x.clientOrderId === f.clientOrderId);
       if (!o) continue;
       fills.push({ id: f.fillId, orderId: o.id, accountId: f.accountId, price: f.price, volume: f.volume, at: f.at, simulated: this.d.provider.info.simulated });
-      this.log('order', 'fill', `Fill ${f.volume} @ ${f.price} on ${o.clientOrderId}.`, o.clientOrderId, { price: f.price, volume: f.volume });
+      this.log('order', 'fill', `Fill ${f.volume} @ ${f.price} on ${this.label(o)}.`, o.clientOrderId, { price: f.price, volume: f.volume });
     }
 
     let positions = [...state.positions];
@@ -228,13 +235,13 @@ export class ExecutionOrchestrator {
   private async modifyPosition(pos: Position, o: Order, stopLoss: number, takeProfit: number, why: string): Promise<Position> {
     const at = this.d.now();
     const requested: Position = { ...pos, tpModification: { state: 'requested', requested: takeProfit, at } };
-    this.log('order', 'modify_requested', `${why}: SL ${stopLoss}, TP ${takeProfit} on ${o.clientOrderId}.`, o.clientOrderId);
+    this.log('order', 'modify_requested', `${why}: SL ${stopLoss}, TP ${takeProfit} on ${this.label(o)}.`, o.clientOrderId);
     const res = await this.d.provider.modifyProtection({ clientOrderId: o.clientOrderId, target: 'position', stopLoss, takeProfit });
     if (!res.ok) {
-      this.log('order', 'modify_failed', `Modification failed on ${o.clientOrderId}: ${res.message}`, o.clientOrderId);
+      this.log('order', 'modify_failed', `Modification failed on ${this.label(o)}: ${res.message}`, o.clientOrderId);
       return { ...requested, tpModification: { state: 'failed', requested: takeProfit, reason: res.message, at } };
     }
-    this.log('order', 'modify_confirmed', `Provider confirmed SL ${res.value.stopLoss}, TP ${res.value.takeProfit} on ${o.clientOrderId}.`, o.clientOrderId);
+    this.log('order', 'modify_confirmed', `Provider confirmed SL ${res.value.stopLoss}, TP ${res.value.takeProfit} on ${this.label(o)}.`, o.clientOrderId);
     return { ...requested, stopLoss: res.value.stopLoss, takeProfit: res.value.takeProfit, tpModification: { state: 'confirmed', requested: takeProfit, at } };
   }
 
@@ -253,12 +260,12 @@ export class ExecutionOrchestrator {
       } else {
         const o = orders.find((x) => x.id === c.id);
         if (!o) continue;
-        this.log('order', 'modify_requested', `TP change on pending ${o.clientOrderId}: ${o.takeProfit} → ${c.newTp}.`, o.clientOrderId);
+        this.log('order', 'modify_requested', `TP change on pending ${this.label(o)}: ${o.takeProfit} → ${c.newTp}.`, o.clientOrderId);
         const res = await this.d.provider.modifyProtection({ clientOrderId: o.clientOrderId, target: 'order', stopLoss: o.stopLoss, takeProfit: c.newTp });
         if (!res.ok) {
-          this.log('order', 'modify_failed', `Pending-order TP change failed on ${o.clientOrderId}: ${res.message}`, o.clientOrderId);
+          this.log('order', 'modify_failed', `Pending-order TP change failed on ${this.label(o)}: ${res.message}`, o.clientOrderId);
         } else {
-          this.log('order', 'modify_confirmed', `Provider confirmed TP ${res.value.takeProfit} on pending ${o.clientOrderId}.`, o.clientOrderId);
+          this.log('order', 'modify_confirmed', `Provider confirmed TP ${res.value.takeProfit} on pending ${this.label(o)}.`, o.clientOrderId);
           orders = orders.map((x) => (x.id === o.id ? { ...x, takeProfit: res.value.takeProfit, updatedAt: this.d.now() } : x));
         }
       }
@@ -270,16 +277,16 @@ export class ExecutionOrchestrator {
     const o = state.orders.find((x) => x.clientOrderId === clientOrderId);
     if (!o || !isWorking(o.state)) return state;
     let orders = state.orders.map((x) => (x.id === o.id && canTransition(x.state, 'cancel_requested') ? { ...x, state: 'cancel_requested' as const, updatedAt: this.d.now() } : x));
-    this.log('order', 'cancel_requested', `Cancel requested for ${clientOrderId} (${reason}).`, clientOrderId);
+    this.log('order', 'cancel_requested', `Cancel requested for ${this.label(o)} (${reason}).`, clientOrderId);
     const res = await this.d.provider.cancelOrder(clientOrderId);
     if (!res.ok) {
-      this.log('order', 'cancel_failed', `Cancel failed for ${clientOrderId}: ${res.message}`, clientOrderId);
+      this.log('order', 'cancel_failed', `Cancel failed for ${this.label(o)}: ${res.message}`, clientOrderId);
       // Revert optimistic state and let reconciliation show the provider's view.
       orders = orders.map((x) => (x.id === o.id ? { ...x, state: o.state } : x));
       return { ...state, orders };
     }
     orders = orders.map((x) => (x.id === o.id ? this.advance(x, res.value.state) : x));
-    this.log('order', 'cancelled', `Provider confirmed ${res.value.state} for ${clientOrderId}.`, clientOrderId);
+    this.log('order', 'cancelled', `Provider confirmed ${res.value.state} for ${this.label(o)}.`, clientOrderId);
     return { ...state, orders };
   }
 
