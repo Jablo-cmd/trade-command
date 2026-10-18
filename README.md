@@ -20,7 +20,7 @@ Private, mobile-first trading operations console for managing **up to 40 of the 
 | Prop-firm compatibility profiles (9 rule items, source + date required) | **Functional**: all rules default to *unknown*, which blocks live execution |
 | Order submission, fills, partial fills, cancellation, TP modification, reconciliation, emergency disable | **Simulation only** (labelled simulator) |
 | MT5 execution | **Blocked**: interface + "unavailable" provider only (see [docs/MT5_CONNECTOR.md](docs/MT5_CONNECTOR.md)) |
-| Supabase Auth + Postgres persistence | **Schema deployed** to the owner's project (17 tables, RLS on all). The schema and RLS are tested on local PostgreSQL, and the adapter is unit-tested against a fake client. The app has not yet been exercised end-to-end against the live project. |
+| Supabase Auth + Postgres persistence | **Schema deployed** to the owner's project (17 tables, RLS on all). The schema and RLS are tested on local PostgreSQL, the adapter is unit-tested against a fake client, and the app passed an end-to-end test against the live project on 2026-10-18 (`npm run test:live`). |
 | Audit log (credential redaction, append-only in DB) | **Functional** |
 | PWA (manifest + app-shell service worker) | **Functional** (production build) |
 
@@ -76,6 +76,7 @@ Typical simulated walkthrough:
 | `npm test` | Vitest unit + integration tests |
 | `npm run test:e2e` | Playwright on a Pixel 7 profile (builds and serves `vite preview`) |
 | `npm run test:rls` | Applies migrations to a **disposable local PostgreSQL** cluster and runs RLS/constraint tests (needs PostgreSQL server binaries, e.g. `/usr/lib/postgresql/16/bin`) |
+| `npm run test:live` | Playwright against a **real** Supabase project (see *Live Supabase test* below) |
 | `npm run build` | Type check + production build to `dist/` |
 | `npm run check` | typecheck + lint + test + build |
 
@@ -96,6 +97,21 @@ Migrations 0001–0004 have been applied to the owner's dedicated "Trade Command
 2. Apply the migrations in order. With the Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`. Alternatively, paste `supabase/migrations/*.sql` into the SQL editor in filename order. **Do not** run `supabase/tests/00_local_supabase_shim.sql` against Supabase; it only emulates `auth` locally.
 3. Put the URL and anon key in `.env.local` and restart `npm run dev`. The app then shows a sign-in screen and syncs configuration, signals and audit events to your RLS-protected rows.
 4. Simulated orders, fills and positions stay in the browser. In the database, `orders`, `fills`, `positions` and `execution_events` are **read-only for clients**; only a trusted backend (service role) may write them.
+
+### Live Supabase test
+
+`npm run test:live` builds the app with `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` from the environment and drives it on a Pixel 7 profile with two throwaway users (`tc-live-<run>-a|b@example.com`):
+
+- **Persistence:** user A creates a server, an account and a group in the UI. The browser cache is wiped and the page reloaded; everything must come back from the database with no sync error.
+- **Isolation:** user B sees none of A's data in the UI or via the API. B cannot update, delete or create rows under A's user id. Clients cannot write `orders`, and an anonymous client reads nothing.
+
+Before running it, switch **Confirm email** off (Authentication → Sign In / Providers → Email) so the test users get a session at sign-up. Afterwards, switch it back on and delete the test users in the SQL editor (their data is removed by cascade):
+
+```sql
+delete from auth.users where email like 'tc-live-%@example.com';
+```
+
+Last run: 2026-10-18 against the owner's project, 2/2 passed.
 
 ## Security model (summary, details in [docs/SECURITY.md](docs/SECURITY.md))
 
@@ -131,7 +147,7 @@ Every rule defaults to *unknown*, and unknown means live is blocked. See [docs/P
 ## Known limitations
 
 - Live execution: none. There is no MT5 connector, and the backend execution service is not built.
-- Supabase sync has not been exercised against a live project. Sync is last-write-wins from a single device; there is no conflict resolution for concurrent editing on multiple devices.
+- Supabase sync is tested live for configuration data (servers, accounts, groups, memberships, audit) but not yet for signals, specs or compatibility profiles. Sync is last-write-wins from a single device; there is no conflict resolution for concurrent editing on multiple devices.
 - Snapshot staleness on the Risk page is evaluated when the page opens.
 - A failed automatic SL/TP re-base is not retried automatically; it is shown as *failed* with the reason.
 - Trading-session calendars, news windows and broker minimum-distance rules are only as good as the data you enter.
