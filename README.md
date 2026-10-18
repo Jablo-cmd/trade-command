@@ -113,6 +113,10 @@ delete from auth.users where email like 'tc-live-%@example.com';
 
 Last run: 2026-10-18 against the owner's project, 2/2 passed.
 
+## Hosting
+
+Production is static files on Apache at `trade.aurisnexus.co.za` (HostAfrica cPanel). See [docs/DEPLOY_HOSTAFRICA.md](docs/DEPLOY_HOSTAFRICA.md) for the build, subdomain, SSL, Supabase Auth URL and upload steps.
+
 ## Security model (summary, details in [docs/SECURITY.md](docs/SECURITY.md))
 
 - RLS is enabled **and forced** on every table. Owners have CRUD on their configuration rows; execution records are read-only to clients; the audit log is append-only; `anon` has no access.
