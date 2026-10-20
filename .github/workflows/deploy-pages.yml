@@ -17,6 +17,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Public by design: the project URL and the publishable (anon) key.
+      # Row Level Security protects all data. Never put the service-role key here.
+      VITE_SUPABASE_URL: https://wdnuqkwrkpuazuulipuh.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_yW6eN92v9vknYcT7wl0HQQ_yil9D-S0
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
