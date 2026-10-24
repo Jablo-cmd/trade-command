@@ -126,17 +126,15 @@ test('emergency disable cancels working orders and blocks submissions', async ({
   await expect(page.getByText('Pending / working orders (0)')).toBeVisible();
 });
 
-test('MT5 provider is shown as unavailable and blocks every order', async ({ page }) => {
+test('live MT5 connector cannot be selected without Supabase sign-in', async ({ page }) => {
   await loadDemo(page);
   await page.goto('/#/settings');
-  await page.getByRole('radio', { name: /MT5/ }).check();
-  await expect(page.getByText('MT5 UNAVAILABLE', { exact: true })).toBeVisible();
-  await page.goto('/#/signal');
-  await page.getByRole('button', { name: 'New signal' }).click();
-  await page.getByLabel('Reference entry price').fill('4080');
-  await page.getByRole('button', { name: 'Create signal & preview' }).click();
-  await expect(page.getByText('5 blocked')).toBeVisible();
-  await expect(page.getByRole('button', { name: /Authorise automatic groups/ })).toBeDisabled();
+  await expect(page.getByRole('radio', { name: /MT5 connector/ })).toBeDisabled();
+  await expect(page.getByText('The MT5 connector needs Supabase sign-in')).toBeVisible();
+  await expect(page.getByText('SIMULATION', { exact: true })).toBeVisible();
+  // Every account card shows its ID for the VPS connector config.
+  await page.goto('/#/accounts');
+  await expect(page.getByText('Paste this into the VPS connector config.').first()).toBeVisible();
 });
 
 test('bottom navigation reaches every section', async ({ page }) => {

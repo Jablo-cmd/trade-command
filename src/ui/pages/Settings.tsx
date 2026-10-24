@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { defaultTpDistance } from '../../domain/strategy';
 import type { StrategyConfig } from '../../domain/types';
-import { LIVE_EXECUTION_ENABLED } from '../../execution/orchestrator';
-import { UNAVAILABLE_MT5_MESSAGE } from '../../execution/unavailableProvider';
 import { isSupabaseConfigured } from '../../state/supabaseConfig';
 import { Badge, Card, Field, NumberInput, PageHeader, useConfirm } from '../components';
 import { useAction, useAppState, useStoreInstance } from '../storeContext';
@@ -35,15 +33,36 @@ export function Settings() {
             </span>
           </label>
           <label className="check">
-            <input type="radio" name="provider" checked={data.settings.provider === 'mt5_unavailable'} onChange={() => run(() => store.setProvider('mt5_unavailable'))} />
+            <input
+              type="radio"
+              name="provider"
+              disabled={!store.connectorAvailable}
+              checked={data.settings.provider === 'mt5_connector'}
+              onChange={() =>
+                ask(
+                  'Switch to live MT5 execution?',
+                  <>
+                    <p>Authorised orders will be sent to MT5 through the connector on your Windows VPS.</p>
+                    <ul className="reasons">
+                      <li>The connector re-checks every order against live MT5 balances, your risk limits and each firm&apos;s recorded rules, and rejects anything that fails.</li>
+                      <li>Real-money MT5 accounts are refused unless the VPS config explicitly allows them. Test on demo first.</li>
+                      <li>Emergency disable cancels pending orders on every connected account.</li>
+                    </ul>
+                  </>,
+                  () => run(() => store.setProvider('mt5_connector')),
+                  { label: 'Use live MT5', danger: true },
+                )
+              }
+            />
             <span>
-              MT5 <Badge tone="bad">unavailable</Badge>
+              MT5 connector <Badge tone="bad">live</Badge>
             </span>
           </label>
         </div>
-        <p className="small muted">{UNAVAILABLE_MT5_MESSAGE}</p>
-        <p className="small">
-          Live execution in this build: <Badge tone="bad">{LIVE_EXECUTION_ENABLED ? 'enabled' : 'disabled'}</Badge>
+        <p className="small muted">
+          {store.connectorAvailable
+            ? 'The MT5 connector runs on your Windows VPS. Setup guide: docs/MT5_VPS_SETUP.md in the repository.'
+            : 'The MT5 connector needs Supabase sign-in, which this local-only build does not have.'}
         </p>
       </Card>
 

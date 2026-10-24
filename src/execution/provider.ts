@@ -27,6 +27,26 @@ export interface ProviderInfo {
   kind: 'simulator' | 'mt5' | 'other';
   /** True for any provider that does not reach a real broker. Always displayed in the UI. */
   simulated: boolean;
+  /**
+   * True when a trusted server (the MT5 connector) re-validates every request against live
+   * broker data before acting. Only such providers may receive non-simulated orders.
+   */
+  serverValidated?: boolean;
+  /** True when the provider itself re-bases SL/TP on actual fills (the client must not). */
+  managesProtection?: boolean;
+}
+
+/** Live per-account state reported by a provider (e.g. the connector heartbeat). */
+export interface ProviderAccountState {
+  connection: ProviderConnectionState;
+  tradeMode: 'demo' | 'contest' | 'real' | 'unknown';
+  balance?: number;
+  equity?: number;
+  dailyLossUsed?: number;
+  currency?: string;
+  server?: string;
+  lastSeen?: string;
+  error?: string;
 }
 
 export interface ProviderCapabilities {
@@ -39,6 +59,8 @@ export interface ProviderCapabilities {
 
 export interface SubmitOrderRequest {
   clientOrderId: string;
+  signalId?: string;
+  groupId?: string;
   accountId: string;
   symbol: string;
   type: OrderType;
@@ -61,6 +83,10 @@ export interface ProviderOrder {
   takeProfit: number;
   state: OrderState;
   rejectReason?: string;
+  /** Present when the provider can attribute the order to a signal (lets a new device adopt it). */
+  signalId?: string;
+  groupId?: string;
+  direction?: 'BUY' | 'SELL';
 }
 
 export interface ProviderFill {
@@ -84,6 +110,8 @@ export interface ProviderPosition {
   status: 'open' | 'closed';
   closePrice?: number;
   closedAt?: string;
+  /** Latest SL/TP change outcome when the provider manages protection itself. */
+  tpModification?: { state: 'none' | 'requested' | 'confirmed' | 'failed'; requested?: number; reason?: string; at?: string };
 }
 
 export interface ProviderAccountInfo {
@@ -113,4 +141,8 @@ export interface ExecutionProvider {
   submitOrder(req: SubmitOrderRequest): Promise<ProviderResult<ProviderOrder>>;
   modifyProtection(req: ModifyProtectionRequest): Promise<ProviderResult<{ stopLoss: number; takeProfit: number }>>;
   cancelOrder(clientOrderId: string): Promise<ProviderResult<ProviderOrder>>;
+  /** Live state per account, when the provider has it. */
+  accountStates?(): Promise<Record<string, ProviderAccountState>>;
+  /** Provider-side emergency stop for the given accounts (cancel pending, block new orders). */
+  emergencyDisable?(accountIds: string[]): Promise<ProviderResult<{ cancelled: number }>>;
 }

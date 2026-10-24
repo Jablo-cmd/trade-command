@@ -1,6 +1,6 @@
 # MT5 connector requirements (research notes, not implemented)
 
-**Status:** no MT5 connection exists in this repository. `UnavailableMt5Provider` returns `unsupported` for every call. Treat everything below as requirements to verify before building anything.
+**Status:** the connector is implemented in `connector/` (Python, official `MetaTrader5` package) and set up as described in [MT5_VPS_SETUP.md](MT5_VPS_SETUP.md). It has been tested against a fake MT5 only, so verify the notes below on your VPS with a demo account.
 
 ## What the official MetaTrader 5 Python integration needs
 

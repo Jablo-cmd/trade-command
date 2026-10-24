@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MAX_ACCOUNTS, type ExecutionMode, type Platform, type RiskSettings, type TradingAccount } from '../../domain/types';
 import type { AccountInput } from '../../state/store';
 import { Badge, Card, EmptyState, Field, NumberInput, PageHeader, Toggle, fmtTime, useConfirm } from '../components';
@@ -171,6 +171,9 @@ export function Accounts() {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<string | 'new' | null>(null);
   const [snap, setSnap] = useState<string | null>(null);
+  useEffect(() => {
+    if (!store.provider.info.simulated) void store.refreshLive();
+  }, [store]);
 
   const filtered = data.accounts.filter((a) => `${a.displayName} ${a.firm} ${a.program}`.toLowerCase().includes(q.toLowerCase()));
   const server = (id?: string) => data.servers.find((s) => s.id === id);
@@ -204,7 +207,8 @@ export function Accounts() {
       {data.accounts.length === 0 && editing === null && <EmptyState title="No accounts">Add up to {MAX_ACCOUNTS} of your own trading accounts.</EmptyState>}
       <div className="list">
         {filtered.map((a) => {
-          const [connLabel, connTone] = CONNECTION[a.connectionStatus];
+          const liveState = store.provider.info.simulated ? undefined : store.liveState(a.id);
+          const [connLabel, connTone] = CONNECTION[liveState?.connection ?? a.connectionStatus];
           if (editing === a.id) {
             return (
               <Card key={a.id} title={`Edit ${a.displayName}`}>
@@ -264,6 +268,32 @@ export function Accounts() {
                 <dd>{a.riskSettings.maxRiskPerTrade !== undefined ? `${a.riskSettings.maxRiskPerTrade} ${a.currency}` : <Badge tone="warn">Not set</Badge>}</dd>
                 <dt>Snapshot</dt>
                 <dd>{a.snapshot ? `Eq ${a.snapshot.equity.toLocaleString()} · ${a.snapshot.source.replace('_', ' ')} · ${fmtTime(a.snapshot.asOf)}` : 'none'}</dd>
+                {liveState && (
+                  <>
+                    <dt>MT5 (connector)</dt>
+                    <dd>
+                      <Badge tone={liveState.tradeMode === 'real' ? 'bad' : liveState.tradeMode === 'demo' ? 'info' : 'neutral'}>{liveState.tradeMode}</Badge>{' '}
+                      {liveState.equity !== undefined && `Eq ${liveState.equity.toLocaleString()} ${liveState.currency ?? ''} · `}
+                      {liveState.dailyLossUsed !== undefined && `today's loss ${liveState.dailyLossUsed.toFixed(2)} · `}
+                      seen {fmtTime(liveState.lastSeen)}
+                      {liveState.error && <div className="small bad-text">{liveState.error}</div>}
+                    </dd>
+                  </>
+                )}
+                <dt>Account ID</dt>
+                <dd>
+                  <code className="small selectable">{a.id}</code>{' '}
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(a.id).catch(() => undefined);
+                    }}
+                  >
+                    Copy
+                  </button>
+                  <div className="small muted">Paste this into the VPS connector config.</div>
+                </dd>
               </dl>
               {snap === a.id ? (
                 <SnapshotForm account={a} onDone={() => setSnap(null)} />

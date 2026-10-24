@@ -35,6 +35,14 @@ def test_heartbeat_reports_connection_and_quotes():
     assert hb["login_verified"] and hb["trade_mode"] == "demo"
     assert hb["quotes"]["XAUUSD"] == {"bid": 4080.3, "ask": 4080.5, "time": NOW.isoformat()}
     assert db.accounts[ACCOUNT]["connection_status"] == "connected"
+    assert hb["daily_loss_used"] == 0
+
+
+def test_heartbeat_reports_daily_loss_used():
+    eng, db, mt5 = make()
+    mt5.info.equity = 99600
+    run(eng)
+    assert db.heartbeats[ACCOUNT]["daily_loss_used"] == 400
 
 
 def test_wrong_login_is_unauthorized_and_processes_nothing():

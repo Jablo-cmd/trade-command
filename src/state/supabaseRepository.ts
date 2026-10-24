@@ -57,8 +57,8 @@ export function accountToRows(a: TradingAccount) {
       trading_enabled: a.tradingEnabled,
       execution_mode: a.executionMode,
       instrument_permissions: a.instrumentPermissions,
-      // Clients may only persist statuses they are allowed to claim.
-      connection_status: a.connectionStatus === 'simulated' ? 'simulated' : 'not_configured',
+      // The connector owns the live connection status; the client only ever marks simulation.
+      ...(a.executionMode === 'simulation' ? { connection_status: 'simulated' } : {}),
       compatibility_profile_id: a.compatibilityProfileId ?? null,
       fx_rates: a.fxRates ?? {},
       notes: a.notes ?? null,

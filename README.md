@@ -2,7 +2,7 @@
 
 Private, mobile-first trading operations console for managing **up to 40 of the owner's own** prop-firm trading accounts: accounts, MT5 server directory, groups, master signal, staged entries, per-account risk sizing, take-profit management and order-state monitoring.
 
-> **V1 is simulation-only.** No broker connector is installed, live execution is hard-disabled (`LIVE_EXECUTION_ENABLED = false`), and no real order has ever been sent by this code. Trade Command is not a broker, custodian, payment processor or a service for pooling other traders' money.
+> **Execution:** the simulator is the default. Live MT5 execution goes only through the **MT5 connector** (`connector/`), a program on your Windows VPS that re-checks every order against live MT5 data before sending it. The connector refuses real-money accounts unless its config allows them. The browser never talks to a broker directly. As of this writing, the connector has been tested only against a fake MT5, not a real terminal, and no real order has been sent. Trade Command is not a broker, custodian, payment processor or a service for pooling other traders' money.
 
 ---
 
@@ -19,7 +19,7 @@ Private, mobile-first trading operations console for managing **up to 40 of the 
 | Risk engine (budget, tick value, volume step, min/max volume, commission, FX, daily loss, drawdown, aggregate + group exposure) | **Functional, unit-tested** |
 | Prop-firm compatibility profiles (9 rule items, source + date required) | **Functional**: all rules default to *unknown*, which blocks live execution |
 | Order submission, fills, partial fills, cancellation, TP modification, reconciliation, emergency disable | **Simulation only** (labelled simulator) |
-| MT5 execution | **Blocked**: interface + "unavailable" provider only (see [docs/MT5_CONNECTOR.md](docs/MT5_CONNECTOR.md)) |
+| MT5 execution | **Connector built, not yet run on MT5**: Supabase queue + Windows VPS connector (`connector/`, 55 tests against a fake MT5). Needs a VPS, a demo-account trial and verified firm rules. See [docs/MT5_VPS_SETUP.md](docs/MT5_VPS_SETUP.md) |
 | Supabase Auth + Postgres persistence | **Schema deployed** to the owner's project (17 tables, RLS on all). The schema and RLS are tested on local PostgreSQL, the adapter is unit-tested against a fake client, and the app passed an end-to-end test against the live project on 2026-10-18 (`npm run test:live`). |
 | Audit log (credential redaction, append-only in DB) | **Functional** |
 | PWA (manifest + app-shell service worker) | **Functional** (production build) |
@@ -146,7 +146,7 @@ Every rule defaults to *unknown*, and unknown means live is blocked. See [docs/P
 
 ## Known limitations
 
-- Live execution: none. There is no MT5 connector, and the backend execution service is not built.
+- Live execution: the MT5 connector has not yet been run against a real MT5 terminal. Start with a demo account and the checklist in `docs/MT5_VPS_SETUP.md`.
 - Supabase sync is tested live for configuration data (servers, accounts, groups, memberships, audit) but not yet for signals, specs or compatibility profiles. Sync is last-write-wins from a single device; there is no conflict resolution for concurrent editing on multiple devices.
 - Snapshot staleness on the Risk page is evaluated when the page opens.
 - A failed automatic SL/TP re-base is not retried automatically; it is shown as *failed* with the reason.
@@ -155,8 +155,8 @@ Every rule defaults to *unknown*, and unknown means live is blocked. See [docs/P
 
 ## Roadmap
 
-1. Server-side execution service (Supabase Edge Function or a dedicated service) with a job queue, service-role writes and risk re-validation.
-2. Windows MT5 connector host (see the MT5 doc), once broker and firm permission is verified per account.
+1. Run the connector on a Windows VPS against demo accounts and complete the demo checklist.
+2. Record verified firm rules (FTMO, Sure Leverage Funding) before enabling any real account.
 3. Reconciliation daemon and alerting (push notifications on rejects, unknown states and failed modifications).
 4. Provider-sourced account metrics and instrument specs, replacing manual entry.
 5. Session/news calendar, slippage limits, and multi-device conflict handling.

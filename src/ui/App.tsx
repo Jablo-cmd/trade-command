@@ -39,6 +39,13 @@ function ModeBanner() {
       </div>
     );
   }
+  if (store.provider.info.serverValidated) {
+    return (
+      <div className="banner banner-bad" role="status">
+        <strong>LIVE MT5</strong> — authorised orders go to MT5 through your VPS connector.
+      </div>
+    );
+  }
   return (
     <div className="banner banner-warn" role="status">
       <strong>MT5 UNAVAILABLE</strong> — no connector installed; execution is blocked.

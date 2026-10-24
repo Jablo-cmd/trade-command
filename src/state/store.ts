@@ -22,7 +22,8 @@ import {
   type TradingAccount,
 } from '../domain/types';
 import { ExecutionOrchestrator } from '../execution/orchestrator';
-import type { ExecutionProvider } from '../execution/provider';
+import type { ConnectorProvider } from '../execution/connectorProvider';
+import type { ExecutionProvider, ProviderAccountState } from '../execution/provider';
 import { SimulatedExecutionProvider, type SimulatorFaults } from '../execution/simulator';
 import { UnavailableMt5Provider } from '../execution/unavailableProvider';
 import { buildDemoData } from './demo';
@@ -58,13 +59,60 @@ export class Store {
   private listeners = new Set<() => void>();
   private sim = new SimulatedExecutionProvider();
   private readonly mt5 = new UnavailableMt5Provider();
+  private readonly connector?: ConnectorProvider;
   private readonly nowFn: () => Date;
+  /** Latest live state per account from the connector heartbeat (not persisted). */
+  private live: Record<string, ProviderAccountState> = {};
 
   constructor(
     private readonly repo: Repository,
-    opts: { now?: () => Date } = {},
+    opts: { now?: () => Date; connector?: ConnectorProvider } = {},
   ) {
     this.nowFn = opts.now ?? (() => new Date());
+    this.connector = opts.connector;
+  }
+
+  /** True when the MT5 connector can be used (Supabase sign-in is required for it). */
+  get connectorAvailable(): boolean {
+    return !!this.connector;
+  }
+
+  liveState(accountId: string): ProviderAccountState | undefined {
+    return this.live[accountId];
+  }
+
+  /** Pull connection, balance and equity for every account from the connector heartbeat. */
+  async refreshLive(): Promise<void> {
+    if (!this.provider.accountStates) return;
+    try {
+      this.live = await this.provider.accountStates();
+    } catch (e) {
+      this.reportError(`Could not read connector status: ${e instanceof Error ? e.message : String(e)}`);
+      return;
+    }
+    this.state = { ...this.state };
+    this.emit();
+  }
+
+  /** Accounts with provider-reported connection and balances overlaid (live mode only). */
+  private accountsForPlan(): TradingAccount[] {
+    if (this.provider.info.simulated) return this.data.accounts;
+    return this.data.accounts.map((a) => {
+      const l = this.live[a.id];
+      if (!l) return { ...a, connectionStatus: this.provider === this.mt5 ? 'unsupported' : 'disconnected' };
+      const snapshot =
+        l.balance !== undefined && l.equity !== undefined && l.lastSeen
+          ? {
+              balance: l.balance,
+              equity: l.equity,
+              dailyLossUsed: l.dailyLossUsed ?? 0,
+              drawdownReference: a.snapshot?.drawdownReference ?? a.accountSize,
+              source: 'provider' as const,
+              asOf: l.lastSeen,
+            }
+          : a.snapshot;
+      return { ...a, connectionStatus: l.connection, snapshot };
+    });
   }
 
   // ---- subscription -------------------------------------------------------
@@ -118,11 +166,14 @@ export class Store {
     if (data.simulator) this.sim.restore(data.simulator);
     this.state = { ready: true, busy: false, data };
     this.emit();
+    if (data.settings.provider === 'mt5_connector') void this.refreshLive();
   }
 
   // ---- provider -----------------------------------------------------------
   get provider(): ExecutionProvider {
-    return this.data.settings.provider === 'simulator' ? this.sim : this.mt5;
+    if (this.data.settings.provider === 'simulator') return this.sim;
+    if (this.data.settings.provider === 'mt5_connector' && this.connector) return this.connector;
+    return this.mt5;
   }
   get simulator(): SimulatedExecutionProvider {
     return this.sim;
@@ -436,9 +487,10 @@ export class Store {
   async previewPlan(signalId: string): Promise<PlannedOrder[]> {
     const s = this.data.signals.find((x) => x.id === signalId);
     if (!s) return [];
+    if (!this.provider.info.simulated) await this.refreshLive();
     const market = await this.market(s.symbol);
     return buildExecutionPlan(s, {
-      accounts: this.data.accounts,
+      accounts: this.accountsForPlan(),
       groups: this.data.groups,
       specs: this.data.specs,
       profiles: this.data.profiles,
@@ -532,10 +584,14 @@ export class Store {
   async emergencyDisable() {
     const d0 = { ...this.data, settings: { ...this.data.settings, emergencyDisabled: true } };
     this.commit(d0);
-    await this.runExecution((o) => o.emergencyDisable(this.data.execution));
+    await this.runExecution((o) => o.emergencyDisable(this.data.execution, this.data.accounts.map((a) => a.id), this.data.signals));
   }
 
-  clearEmergency() {
+  async clearEmergency() {
+    if (this.provider === this.connector && this.connector) {
+      const r = await this.connector.clearEmergency();
+      if (!r.ok) this.fail(`The server kill switch could not be cleared: ${r.message}`);
+    }
     this.commit(this.audit({ ...this.data, settings: { ...this.data.settings, emergencyDisabled: false } }, 'safety', 'emergency_cleared', 'Emergency disable cleared by user.'));
   }
 
@@ -554,7 +610,10 @@ export class Store {
 
   // ---- settings & data ----------------------------------------------------
   setProvider(p: ProviderChoice) {
-    this.commit(this.audit({ ...this.data, settings: { ...this.data.settings, provider: p } }, 'settings', 'provider_changed', `Execution provider set to ${p === 'simulator' ? 'Simulator' : 'MT5 (unavailable)'}.`));
+    if (p === 'mt5_connector' && !this.connector) this.fail('The MT5 connector needs Supabase sign-in; it is not available in local-only mode.');
+    const label = { simulator: 'Simulator', mt5_connector: 'MT5 connector (live)', mt5_unavailable: 'MT5 (unavailable)' }[p];
+    this.commit(this.audit({ ...this.data, settings: { ...this.data.settings, provider: p } }, 'settings', 'provider_changed', `Execution provider set to ${label}.`));
+    if (p !== 'simulator') void this.refreshLive();
   }
 
   setStrategy(strategy: StrategyConfig) {

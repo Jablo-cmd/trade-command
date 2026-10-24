@@ -109,6 +109,7 @@ class Engine:
             "terminal_connected": connected, "login_verified": verified, "trade_mode": self._trade_mode,
             "trade_allowed": bool(info and info.trade_allowed), "balance": info.balance if info else None,
             "equity": info.equity if info else None, "currency": info.currency if info else None,
+            "daily_loss_used": float(self._daily_loss_used(info)) if verified and info else None,
             "server": info.server if info else None, "quotes": quotes, "error": error, "last_seen": self.now().isoformat(),
         })
         status = "connected" if verified else ("unauthorized" if connected else "disconnected")

@@ -12,7 +12,7 @@ import {
   type TradingAccount,
 } from '../domain/types';
 
-export type ProviderChoice = 'simulator' | 'mt5_unavailable';
+export type ProviderChoice = 'simulator' | 'mt5_connector' | 'mt5_unavailable';
 
 export interface AppSettings {
   emergencyDisabled: boolean;

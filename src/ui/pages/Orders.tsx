@@ -162,11 +162,20 @@ export function Orders() {
         subtitle={`Provider: ${store.provider.info.name}`}
         actions={
           <>
-            <button className="btn btn-sm" disabled={busy} onClick={() => void run(() => store.reconcile())}>
-              Reconcile
+            <button
+              className="btn btn-sm"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  await store.refreshLive();
+                  await store.reconcile();
+                })
+              }
+            >
+              {store.provider.info.serverValidated ? 'Refresh from MT5' : 'Reconcile'}
             </button>
             {data.settings.emergencyDisabled ? (
-              <button className="btn btn-sm" onClick={() => ask('Clear emergency disable?', <p>New submissions will be allowed again. Previously cancelled orders are not restored.</p>, () => run(() => store.clearEmergency()))}>
+              <button className="btn btn-sm" onClick={() => ask('Clear emergency disable?', <p>New submissions will be allowed again. Previously cancelled orders are not restored.</p>, () => void run(() => store.clearEmergency()))}>
                 Clear emergency
               </button>
             ) : (

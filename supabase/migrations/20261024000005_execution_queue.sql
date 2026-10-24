@@ -27,6 +27,7 @@ create table public.execution_commands (
 create unique index execution_commands_one_submit on public.execution_commands (user_id, client_order_id) where kind = 'submit';
 create index execution_commands_pending on public.execution_commands (account_id, created_at) where status = 'pending';
 create index execution_commands_user_idx on public.execution_commands (user_id, created_at desc);
+create index execution_commands_account_user_idx on public.execution_commands (account_id, user_id);
 
 -- Connector liveness and MT5 state per account, written only by the connector.
 create table public.connector_heartbeats (
@@ -39,6 +40,7 @@ create table public.connector_heartbeats (
   trade_allowed boolean not null,
   balance numeric,
   equity numeric,
+  daily_loss_used numeric check (daily_loss_used >= 0),
   currency text,
   server text,
   quotes jsonb not null default '{}'::jsonb,
@@ -46,6 +48,8 @@ create table public.connector_heartbeats (
   last_seen timestamptz not null default now(),
   foreign key (account_id, user_id) references public.trading_accounts (id, user_id) on delete cascade
 );
+
+create index connector_heartbeats_account_user_idx on public.connector_heartbeats (account_id, user_id);
 
 alter table public.execution_commands enable row level security;
 alter table public.execution_commands force row level security;

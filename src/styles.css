@@ -730,3 +730,7 @@ summary:focus-visible {
     transition: none !important;
   }
 }
+.selectable {
+  user-select: all;
+  word-break: break-all;
+}

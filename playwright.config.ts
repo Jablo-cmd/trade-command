@@ -15,6 +15,9 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run build && npm run preview',
+    // Workflow tests run in local-only mode, even when .env.local configures Supabase
+    // (variables already in the environment take priority over .env files in Vite).
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
