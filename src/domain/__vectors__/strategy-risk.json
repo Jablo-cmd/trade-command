@@ -1,0 +1,20 @@
+{
+  "_comment": "Shared test vectors. Both the app (src/domain/vectors.test.ts) and the MT5 connector (connector/tests/test_vectors.py) must produce these exact results, so client previews and server-side re-validation can never disagree.",
+  "levels": [
+    { "direction": "BUY", "entry": 4080, "tickSize": 0.01, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4065, "tp": 4083 },
+    { "direction": "BUY", "entry": 4077, "tickSize": 0.01, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4062, "tp": 4080 },
+    { "direction": "SELL", "entry": 4080, "tickSize": 0.01, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4095, "tp": 4077 },
+    { "direction": "BUY", "entry": 4076.64, "tickSize": 0.01, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4061.64, "tp": 4079.64 },
+    { "direction": "SELL", "entry": 4080.07, "tickSize": 0.01, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4095.07, "tp": 4077.07 },
+    { "direction": "BUY", "entry": 4080.1, "tickSize": 0.1, "tpPips": 30, "pipSize": 0.1, "slDistance": 15, "sl": 4065.1, "tp": 4083.1 }
+  ],
+  "sizing": [
+    { "budget": 500, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 1, "commission": 0, "vmin": 0.01, "vmax": 50, "vstep": 0.01, "volume": 0.33, "risk": 495 },
+    { "budget": 500, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 0.1, "commission": 0, "vmin": 0.01, "vmax": 50, "vstep": 0.01, "volume": 3.33, "risk": 499.5 },
+    { "budget": 500, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 1, "commission": 0, "vmin": 0.01, "vmax": 50, "vstep": 0.1, "volume": 0.3, "risk": 450 },
+    { "budget": 500, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 1, "commission": 7, "vmin": 0.01, "vmax": 50, "vstep": 0.01, "volume": 0.33, "risk": 497.31 },
+    { "budget": 10, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 1, "commission": 0, "vmin": 0.01, "vmax": 50, "vstep": 0.01, "volume": 0, "risk": 0 },
+    { "budget": 100000, "entry": 4080, "sl": 4065, "tickSize": 0.01, "tickValue": 1, "commission": 0, "vmin": 0.01, "vmax": 2, "vstep": 0.01, "volume": 2, "risk": 3000 },
+    { "budget": 300, "entry": 4080, "sl": 4095, "tickSize": 0.01, "tickValue": 1, "commission": 0, "vmin": 0.01, "vmax": 50, "vstep": 0.01, "volume": 0.2, "risk": 300 }
+  ]
+}
