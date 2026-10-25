@@ -1,44 +1,63 @@
+/* Trade Command — "Forest & Gold".
+   Deep forest greens carry the brand; gold (XAU) is the accent; coral, green's complement,
+   marks sells and danger. Status colours stay distinct from the brand emerald. */
 :root {
-  --bg: #0b1220;
-  --surface: #121a2b;
-  --surface-2: #1a2438;
-  --border: #26324a;
-  --text: #e6ebf5;
-  --muted: #94a3b8;
-  --primary: #38bdf8;
-  --primary-ink: #04111d;
-  --ok: #22c55e;
-  --warn: #f59e0b;
-  --bad: #ef4444;
-  --info: #60a5fa;
-  --sim: #a78bfa;
-  --buy: #22c55e;
-  --sell: #f87171;
-  --radius: 12px;
+  --bg: #06140f;
+  --bg-glow: #0c2a1f;
+  --surface: #0b1f18;
+  --surface-2: #11291f;
+  --border: #1d3d30;
+  --text: #e8f5ee;
+  --muted: #8fb3a3;
+  --primary: #10b981;
+  --primary-strong: #34d399;
+  --primary-ink: #02261a;
+  --accent: #f5c451;
+  --accent-ink: #2b1d00;
+  --ok: #a3e635;
+  --warn: #fb923c;
+  --bad: #fb7185;
+  --bad-ink: #2d0710;
+  --info: #22d3ee;
+  --sim: #e879f9;
+  --buy: #34d399;
+  --sell: #ff7a6b;
+  --on-strong: #04140e;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.25);
+  --radius: 14px;
   --nav-h: 64px;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Sora', 'Manrope', system-ui, sans-serif;
   color-scheme: dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f3f5f9;
+    --bg: #f1f7f3;
+    --bg-glow: #dcefe4;
     --surface: #ffffff;
-    --surface-2: #eef2f7;
-    --border: #d6dde8;
-    --text: #0f172a;
-    --muted: #5b6577;
-    --primary: #0369a1;
+    --surface-2: #e9f4ee;
+    --border: #cde2d6;
+    --text: #0a2a1e;
+    --muted: #4c6b5e;
+    --primary: #047857;
+    --primary-strong: #065f46;
     --primary-ink: #ffffff;
-    --ok: #15803d;
-    --warn: #b45309;
-    --bad: #b91c1c;
-    --info: #1d4ed8;
-    --sim: #6d28d9;
-    --buy: #15803d;
-    --sell: #b91c1c;
+    --accent: #a8700b;
+    --accent-ink: #ffffff;
+    --ok: #4d7c0f;
+    --warn: #c2410c;
+    --bad: #be123c;
+    --bad-ink: #ffffff;
+    --info: #0e7490;
+    --sim: #a21caf;
+    --buy: #047857;
+    --sell: #c2410c;
+    --on-strong: #ffffff;
+    --shadow: 0 1px 2px rgb(10 42 30 / 0.06), 0 8px 24px rgb(10 42 30 / 0.07);
     color-scheme: light;
   }
 }
@@ -48,20 +67,35 @@
 }
 body {
   margin: 0;
-  background: var(--bg);
+  /* A soft forest glow at the top of the page, then the flat base colour. */
+  background:
+    radial-gradient(120% 60% at 50% -10%, var(--bg-glow) 0%, transparent 60%) no-repeat,
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+  letter-spacing: -0.01em;
 }
 h1 {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
+  font-weight: 700;
   margin: 0;
 }
 h2 {
   font-size: 1.05rem;
+  font-weight: 600;
   margin: 0;
 }
 h3 {
   font-size: 0.95rem;
+  font-weight: 600;
   margin: 1rem 0 0.5rem;
 }
 a {
@@ -106,7 +140,8 @@ pre {
   gap: 0.75rem;
   padding: 0.6rem 1rem;
   padding-top: calc(0.6rem + env(safe-area-inset-top));
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
 .brand {
@@ -115,17 +150,22 @@ pre {
   gap: 0.5rem;
   color: var(--text);
   text-decoration: none;
+  font-family: var(--font-display);
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--primary-ink);
-  font-size: 0.75rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  /* Emerald tile with a gold monogram: the brand in one glyph. */
+  background: linear-gradient(140deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 55%, #000) 100%);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .topbar-title {
   color: var(--muted);
@@ -175,7 +215,8 @@ pre {
   grid-template-columns: repeat(5, 1fr);
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
 }
 .bottom-nav a {
@@ -190,7 +231,14 @@ pre {
   min-height: 48px;
 }
 .bottom-nav a.active {
-  color: var(--primary);
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+.bottom-nav a.active svg {
+  padding: 2px 14px;
+  box-sizing: content-box;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .page-head {
@@ -218,6 +266,7 @@ pre {
   border-radius: var(--radius);
   padding: 1rem;
   margin-bottom: 1rem;
+  box-shadow: var(--shadow);
 }
 .card-head {
   display: flex;
@@ -273,8 +322,10 @@ pre {
   font: inherit;
 }
 .stat-value {
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
   font-weight: 700;
+  color: var(--accent);
 }
 .stat-value small {
   font-size: 0.9rem;
@@ -625,11 +676,11 @@ summary:focus-visible {
 }
 .segmented button.on.buy {
   background: var(--buy);
-  color: #fff;
+  color: var(--on-strong);
 }
 .segmented button.on.sell {
   background: var(--sell);
-  color: #fff;
+  color: var(--on-strong);
 }
 
 .btn {
@@ -639,7 +690,7 @@ summary:focus-visible {
   gap: 0.35rem;
   min-height: 44px;
   padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
@@ -647,6 +698,10 @@ summary:focus-visible {
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .btn-sm {
   min-height: 36px;
@@ -657,11 +712,16 @@ summary:focus-visible {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-ink);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
 }
 .btn-danger {
   background: var(--bad);
   border-color: var(--bad);
-  color: #fff;
+  color: var(--bad-ink);
 }
 .btn-danger-ghost {
   color: var(--bad);
