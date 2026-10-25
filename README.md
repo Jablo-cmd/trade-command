@@ -91,7 +91,7 @@ Copy `.env.example` to `.env.local`. Never commit real values.
 
 ## Supabase setup (when you choose to)
 
-Migrations 0001–0004 have been applied to the owner's dedicated "Trade Command" project (`wdnuqkwrkpuazuulipuh`, applied 2026-10-18). For a new project:
+Migrations 0001–0005 have been applied to the owner's dedicated "Trade Command" project (`wdnuqkwrkpuazuulipuh`, applied 2026-10-18). For a new project:
 
 1. Create a project (a free tier is sufficient for development) and enable email/password auth.
 2. Apply the migrations in order. With the Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`. Alternatively, paste `supabase/migrations/*.sql` into the SQL editor in filename order. **Do not** run `supabase/tests/00_local_supabase_shim.sql` against Supabase; it only emulates `auth` locally.
