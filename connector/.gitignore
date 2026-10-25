@@ -1,0 +1,4 @@
+__pycache__/
+.pytest_cache/
+accounts/*.json
+!accounts/example.json

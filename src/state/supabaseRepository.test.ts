@@ -38,8 +38,9 @@ describe('Supabase mappers', () => {
   });
 
   it('never persists a claimed broker connection from the client', () => {
-    expect(accountToRows(account({ connectionStatus: 'connected' })).account.connection_status).toBe('not_configured');
-    expect(accountToRows(account({ connectionStatus: 'simulated' })).account.connection_status).toBe('simulated');
+    // Never sent for live accounts, so a stale client can't overwrite the connector's status.
+    expect(accountToRows(account({ executionMode: 'live_automated', connectionStatus: 'connected' })).account).not.toHaveProperty('connection_status');
+    expect(accountToRows(account({ executionMode: 'simulation', connectionStatus: 'simulated' })).account.connection_status).toBe('simulated');
   });
 
   it('round-trips a signal with extended TP and group plans', () => {

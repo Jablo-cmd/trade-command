@@ -124,5 +124,43 @@ select pg_temp.expect((select count(*) from public.orders) = 1, 'A can read own 
 set request.jwt.claim.sub = 'bbbbbbbb-0000-0000-0000-000000000002';
 select pg_temp.expect((select count(*) from public.orders) = 0, 'B cannot read A orders');
 
+
+-- ------------------------------------------------------------------ execution queue
+set role authenticated;
+set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-000000000001';
+insert into public.execution_commands (kind, account_id, signal_id, client_order_id, payload)
+  values ('submit', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'q:1', '{"volume":0.1}');
+select pg_temp.expect((select count(*) from public.execution_commands) = 1, 'A can queue a submit command');
+select pg_temp.expect_error($$insert into public.execution_commands (kind, account_id, signal_id, client_order_id)
+  values ('submit', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'q:1')$$, 'duplicate submit for same client_order_id rejected');
+select pg_temp.expect_error($$insert into public.execution_commands (kind, account_id, signal_id, client_order_id, status)
+  values ('submit', '20000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 'q:2', 'done')$$, 'client cannot insert an already-completed command');
+select pg_temp.expect_error($$update public.execution_commands set status = 'done'$$, 'client cannot update command status');
+select pg_temp.expect_error($$delete from public.execution_commands$$, 'client cannot delete commands');
+select pg_temp.expect_error($$insert into public.execution_commands (kind, account_id, client_order_id, payload)
+  values ('cancel', '20000000-0000-0000-0000-000000000001', 'q:1', '{"password":"x"}')$$, 'secrets rejected in command payload');
+select pg_temp.expect_error($$insert into public.connector_heartbeats (account_id, user_id, connector_id, terminal_connected, login_verified, trade_mode, trade_allowed)
+  values ('20000000-0000-0000-0000-000000000001', auth.uid(), 'fake', true, true, 'real', true)$$, 'client cannot write connector heartbeats');
+
+set request.jwt.claim.sub = 'bbbbbbbb-0000-0000-0000-000000000002';
+select pg_temp.expect((select count(*) from public.execution_commands) = 0, 'B cannot read A commands');
+select pg_temp.expect_error($$insert into public.execution_commands (kind, account_id, client_order_id)
+  values ('cancel', '20000000-0000-0000-0000-000000000001', 'q:1')$$, 'B cannot queue commands for A account');
+
+set role service_role;
+with u as (update public.execution_commands set status = 'claimed', claimed_by = 'vps-1', claimed_at = now()
+  where client_order_id = 'q:1' and status = 'pending' returning 1)
+  select pg_temp.expect((select count(*) from u) = 1, 'connector can claim a pending command');
+with u as (update public.execution_commands set status = 'claimed' where client_order_id = 'q:1' and status = 'pending' returning 1)
+  select pg_temp.expect((select count(*) from u) = 0, 'a claimed command cannot be claimed twice');
+insert into public.connector_heartbeats (account_id, user_id, connector_id, terminal_connected, login_verified, trade_mode, trade_allowed)
+  values ('20000000-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'vps-1', true, true, 'demo', true);
+update public.trading_accounts set connection_status = 'connected' where id = '20000000-0000-0000-0000-000000000001';
+select pg_temp.expect((select connection_status from public.trading_accounts where id = '20000000-0000-0000-0000-000000000001') = 'connected', 'connector can set connected status');
+
+set role authenticated;
+set request.jwt.claim.sub = 'aaaaaaaa-0000-0000-0000-000000000001';
+select pg_temp.expect((select count(*) from public.connector_heartbeats) = 1, 'A can read own connector heartbeat');
+
 reset role;
 \echo 'ALL RLS TESTS PASSED'

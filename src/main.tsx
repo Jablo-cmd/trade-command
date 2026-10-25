@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { AuthGate } from './ui/AuthGate';
 import { StoreContext } from './ui/storeContext';
+import { ConnectorProvider, supabaseConnectorDb } from './execution/connectorProvider';
 import { LocalRepository } from './state/repository';
 import { Store } from './state/store';
 import { getSupabase, isSupabaseConfigured } from './state/supabaseConfig';
@@ -13,7 +14,7 @@ function WithStore({ userId }: { userId?: string }) {
   const store = useMemo(() => {
     if (!userId) return new Store(new LocalRepository());
     const repo = new SupabaseRepository(getSupabase(), userId);
-    const s = new Store(repo);
+    const s = new Store(repo, { connector: new ConnectorProvider(supabaseConnectorDb(getSupabase())) });
     repo.onError = s.reportError;
     return s;
   }, [userId]);

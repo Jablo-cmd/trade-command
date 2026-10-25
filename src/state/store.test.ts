@@ -161,3 +161,45 @@ describe('signal workflow through the simulator', () => {
     await expect(store.submitSignal(sig.id, [gs[0]!.id])).rejects.toThrow(/No ready orders/);
   });
 });
+
+describe('live MT5 connector mode', () => {
+  it('uses the connector heartbeat for connection, balances and quotes; blocks when it goes stale', async () => {
+    const { ConnectorProvider } = await import('../execution/connectorProvider');
+    const hb = {
+      account_id: '', terminal_connected: true, login_verified: true, trade_mode: 'demo', balance: 100000, equity: 100000,
+      daily_loss_used: 0, currency: 'USD', last_seen: NOW.toISOString(), quotes: { XAUUSD: { bid: 4080.3, ask: 4080.5, time: NOW.toISOString() } },
+    };
+    const fakeDb = {
+      insertCommand: async () => ({ data: null, error: { message: 'not used' } }),
+      getCommand: async () => ({ data: null, error: null }),
+      findSubmit: async () => ({ data: null, error: null }),
+      list: async (t: string) => ({ data: t === 'connector_heartbeats' ? [hb] : [], error: null }),
+      setEmergency: async () => ({ data: null, error: null }),
+    };
+    const connector = new ConnectorProvider(fakeDb, { now: () => NOW.getTime() });
+    const live = new Store(new MemoryRepository(), { now: () => NOW, connector });
+    await live.init();
+    live.loadDemoData();
+    const d = () => live.getState().data;
+    const acc = d().accounts[0]!;
+    hb.account_id = acc.id;
+    live.updateAccount(acc.id, { executionMode: 'live_automated' });
+    const spec = d().specs[0]!;
+    live.upsertSpec({ ...spec, verification: { status: 'verified', source: 'MT5 symbol specification', verifiedOn: '2026-01-14' } });
+    for (const k of Object.keys(d().profiles[0]!.items)) {
+      live.updateProfileItem(d().profiles[0]!.id, k as never, { status: 'permitted', source: 'https://ftmo.com/en/faq/', verifiedOn: '2026-01-10' });
+    }
+    live.setProvider('mt5_connector');
+    const groupA = d().groups.find((g) => g.accountIds.includes(acc.id))!;
+    const sig = live.createSignal({ symbol: 'XAUUSD', direction: 'BUY', referenceEntry: 4077, strategy: DEFAULT_GOLD_STRATEGY, groupIds: [groupA.id], marketForZeroOffset: false });
+
+    let plan = await live.previewPlan(sig.id);
+    expect(plan[0]!.status).toBe('ready');
+    expect(live.liveState(acc.id)).toMatchObject({ connection: 'connected', tradeMode: 'demo' });
+
+    hb.last_seen = new Date(NOW.getTime() - 5 * 60_000).toISOString();
+    plan = await live.previewPlan(sig.id);
+    expect(plan[0]!.status).toBe('blocked');
+    expect(plan[0]!.blockers.join()).toMatch(/connection is disconnected/);
+  });
+});

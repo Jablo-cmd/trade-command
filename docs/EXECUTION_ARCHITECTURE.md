@@ -29,7 +29,9 @@ UI (React)  →  Store (audited actions)  →  Domain (pure)              →  O
 
 The other states are `rejected`, `cancel_requested`, `cancelled`, `expired` and `unknown`. Terminal states cannot be left; invalid provider transitions are recorded as `unknown` and audited. A cancel request can still end `filled`, because of the race between the cancel and a fill.
 
-## Required production shape (not built in V1)
+## Production shape (implemented by the MT5 connector)
+
+Implemented in `supabase/migrations/20261024000005_execution_queue.sql`, `src/execution/connectorProvider.ts` and `connector/`. The original design notes follow.
 
 A browser tab is not a persistent execution engine: it sleeps, loses connectivity and cannot hold broker sessions. Live execution must be:
 

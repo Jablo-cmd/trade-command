@@ -1,0 +1,19 @@
+{
+  "connector_id": "vps-1-ftmo-demo",
+  "supabase_url": "https://wdnuqkwrkpuazuulipuh.supabase.co",
+  "service_key_env": "TC_SUPABASE_SERVICE_KEY",
+  "magic": 7031001,
+  "allow_real_accounts": false,
+  "max_command_age_seconds": 120,
+  "quote_max_age_seconds": 60,
+  "server_day_utc_offset_hours": 2,
+  "poll_seconds": 2,
+  "account": {
+    "trading_account_id": "PASTE-THE-ACCOUNT-ID-FROM-THE-APP",
+    "mt5_login": 12345678,
+    "mt5_server": "EXACT-SERVER-NAME-FROM-MT5-LOGIN",
+    "terminal_path": "C:\\MT5\\ftmo-demo-1\\terminal64.exe",
+    "password_env": "TC_MT5_PASSWORD_FTMO_DEMO_1",
+    "symbols": { "XAUUSD": "XAUUSD" }
+  }
+}

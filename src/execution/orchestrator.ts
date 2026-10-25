@@ -8,7 +8,8 @@
  *  - Local state only advances on provider-confirmed results.
  *  - TP changes are shown as `requested` until the provider confirms; SL is never
  *    altered by a TP change.
- *  - Non-simulated providers are refused while LIVE_EXECUTION_ENABLED is false.
+ *  - Non-simulated providers are refused unless they are server-validated (the MT5 connector
+ *    re-checks every order against live broker data on the VPS before acting).
  */
 import { createAuditEvent } from '../domain/audit';
 import type { TpChange } from '../domain/extendedTp';
@@ -18,9 +19,9 @@ import type { AuditEvent, Fill, MasterSignal, Order, OrderState, Position } from
 import type { ExecutionProvider } from './provider';
 
 /**
- * Hard switch. V1 ships with live execution disabled: there is no authorised broker
- * connector, and prop-firm permissions are unverified. Do not flip this in the client;
- * live execution must be implemented server-side.
+ * Hard switch for direct client-to-broker execution. It stays false: the browser never
+ * talks to a broker. Live orders are allowed only through a server-validated provider
+ * (the MT5 connector), which re-checks everything on the VPS before sending.
  */
 export const LIVE_EXECUTION_ENABLED = false;
 
@@ -59,7 +60,8 @@ export class ExecutionOrchestrator {
   }
 
   private guardProvider(): string | undefined {
-    if (!this.d.provider.info.simulated && !LIVE_EXECUTION_ENABLED) {
+    const info = this.d.provider.info;
+    if (!info.simulated && !info.serverValidated && !LIVE_EXECUTION_ENABLED) {
       return 'Live execution is disabled in this build. No broker orders can be sent.';
     }
     return undefined;
@@ -120,6 +122,8 @@ export class ExecutionOrchestrator {
       try {
         const res = await this.d.provider.submitOrder({
           clientOrderId: p.clientOrderId,
+          signalId: signal.id,
+          groupId: p.groupId,
           accountId: p.accountId,
           symbol: p.symbol,
           type: p.orderType,
@@ -128,7 +132,10 @@ export class ExecutionOrchestrator {
           stopLoss: p.stopLoss,
           takeProfit: p.takeProfit,
         });
-        if (!res.ok) {
+        if (!res.ok && res.code === 'unknown') {
+          order = { ...order, state: 'unknown', rejectReason: res.message, updatedAt: this.d.now() };
+          this.log('order', 'unknown', `Submission outcome unknown for ${p.accountName}: ${res.message}`, order.clientOrderId);
+        } else if (!res.ok) {
           order = { ...order, state: 'rejected', rejectReason: `${res.code}: ${res.message}`, updatedAt: this.d.now() };
           this.log('order', 'rejected', `Order rejected for ${p.accountName}: ${res.message}`, order.clientOrderId);
         } else {
@@ -167,8 +174,36 @@ export class ExecutionOrchestrator {
       if (!remote) return o;
       const next = this.advance({ ...o, filledVolume: remote.filledVolume, providerOrderId: remote.providerOrderId }, remote.state, remote.rejectReason);
       if (next.state !== o.state) this.log('order', 'state_changed', `${this.label(o)}: ${o.state} → ${next.state}.`, o.clientOrderId);
-      return { ...next, stopLoss: remote.stopLoss, takeProfit: remote.takeProfit };
+      return { ...next, stopLoss: remote.stopLoss, takeProfit: remote.takeProfit, volume: remote.volume };
     });
+    // Adopt provider orders this device has not seen (e.g. placed from another device).
+    for (const r of po.value) {
+      if (orders.some((o) => o.clientOrderId === r.clientOrderId)) continue;
+      if (!r.signalId || !r.direction || !signals.some((s) => s.id === r.signalId)) continue;
+      const now = this.d.now();
+      orders.push({
+        id: this.d.newId(),
+        clientOrderId: r.clientOrderId,
+        signalId: r.signalId,
+        groupId: r.groupId ?? '',
+        accountId: r.accountId,
+        symbol: r.symbol,
+        direction: r.direction,
+        type: r.type,
+        volume: r.volume,
+        filledVolume: r.filledVolume,
+        limitPrice: r.price,
+        stopLoss: r.stopLoss,
+        takeProfit: r.takeProfit,
+        state: r.state,
+        providerOrderId: r.providerOrderId,
+        providerName: this.d.provider.info.name,
+        simulated: this.d.provider.info.simulated,
+        rejectReason: r.rejectReason,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     const fills = [...state.fills];
     for (const f of pf.value) {
@@ -211,13 +246,14 @@ export class ExecutionOrchestrator {
         status: rp.status,
         closePrice: rp.closePrice,
         closedAt: rp.closedAt,
+        ...(rp.tpModification ? { tpModification: rp.tpModification } : {}),
       };
       if (!existing) this.log('order', 'position_opened', `Position opened ${o.symbol} ${rp.volume} @ ${rp.entryPrice}.`, o.clientOrderId);
       if (existing && existing.status === 'open' && rp.status === 'closed') {
         this.log('order', 'position_closed', `Position closed @ ${rp.closePrice}.`, o.clientOrderId);
       }
-      // Re-base protective levels on ACTUAL fills.
-      if (signal && pos.status === 'open') {
+      // Re-base protective levels on ACTUAL fills (unless the provider does it server-side).
+      if (signal && pos.status === 'open' && !this.d.provider.info.managesProtection) {
         const myFills = fills.filter((f) => f.orderId === o.id);
         if (myFills.length) {
           const target = targetLevelsForFills(signal, myFills, this.d.tickSizeFor(o.accountId, o.symbol));
@@ -297,8 +333,15 @@ export class ExecutionOrchestrator {
   }
 
   /** Emergency disable: cancels every working order. Open positions keep their SL/TP. */
-  async emergencyDisable(state: ExecutionState): Promise<ExecutionState> {
+  async emergencyDisable(state: ExecutionState, accountIds: string[] = [], signals: MasterSignal[] = []): Promise<ExecutionState> {
     this.log('safety', 'emergency_disable', 'EMERGENCY DISABLE activated: cancelling all working orders and blocking new submissions.');
+    if (this.d.provider.emergencyDisable) {
+      // Provider-side stop covers every order on each account, including ones this device never saw.
+      const res = await this.d.provider.emergencyDisable(accountIds);
+      if (res.ok) this.log('safety', 'emergency_confirmed', `Provider cancelled ${res.value.cancelled} pending order(s).`);
+      else this.log('safety', 'emergency_failed', `Provider emergency stop failed: ${res.message}. Cancel orders in MT5 directly.`);
+      return this.reconcile(signals, state);
+    }
     let s = state;
     for (const o of state.orders.filter((x) => isWorking(x.state))) s = await this.cancel(o.clientOrderId, s, 'emergency disable');
     return s;
