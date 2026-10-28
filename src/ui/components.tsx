@@ -159,6 +159,28 @@ export function useConfirm() {
   return { dialog, ask: (title: string, body: ReactNode, run: () => void, opts: { label?: string; danger?: boolean } = {}) => setState({ title, body, run, ...opts }) };
 }
 
+/** Profit in blue, loss in red — the MT5 convention. Undefined means "cannot be valued". */
+export function Pnl({ value, currency, title }: { value: number | undefined; currency?: string; title?: string }) {
+  if (value === undefined) {
+    return (
+      <span className="muted" title={title ?? 'Needs a price, the broker specification and a currency rate.'}>
+        —
+      </span>
+    );
+  }
+  const kind = value > 0 ? 'pos' : value < 0 ? 'neg' : 'zero';
+  const sign = value > 0 ? '+' : value < 0 ? '\u2212' : '';
+  const text = Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (
+    <span className={`pnl pnl-${kind}`} title={title}>
+      {sign}
+      {text}
+      {currency ? ` ${currency}` : ''}
+      <span className="sr-only">{value > 0 ? ' profit' : value < 0 ? ' loss' : ' break-even'}</span>
+    </span>
+  );
+}
+
 export function fmtTime(iso?: string) {
   if (!iso) return '—';
   const d = new Date(iso);

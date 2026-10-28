@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MAX_ACCOUNTS, type ExecutionMode, type Platform, type RiskSettings, type TradingAccount } from '../../domain/types';
 import type { AccountInput } from '../../state/store';
-import { Badge, Card, EmptyState, Field, NumberInput, PageHeader, Toggle, fmtTime, useConfirm } from '../components';
+import { Badge, Card, EmptyState, Field, NumberInput, PageHeader, Pnl, Toggle, fmtTime, useConfirm } from '../components';
 import { CONNECTION, EXEC_MODE } from '../labels';
 import { useAction, useAppState, useStoreInstance } from '../storeContext';
 
@@ -274,9 +274,24 @@ export function Accounts() {
                     <dd>
                       <Badge tone={liveState.tradeMode === 'real' ? 'bad' : liveState.tradeMode === 'demo' ? 'info' : 'neutral'}>{liveState.tradeMode}</Badge>{' '}
                       {liveState.equity !== undefined && `Eq ${liveState.equity.toLocaleString()} ${liveState.currency ?? ''} · `}
-                      {liveState.dailyLossUsed !== undefined && `today's loss ${liveState.dailyLossUsed.toFixed(2)} · `}
                       seen {fmtTime(liveState.lastSeen)}
                       {liveState.error && <div className="small bad-text">{liveState.error}</div>}
+                    </dd>
+                  </>
+                )}
+                {liveState?.equity !== undefined && liveState.balance !== undefined && (
+                  <>
+                    <dt>Floating P&amp;L</dt>
+                    <dd>
+                      <Pnl value={Math.round((liveState.equity - liveState.balance) * 100) / 100} currency={liveState.currency} title="Equity minus balance, as reported by MT5." />
+                    </dd>
+                  </>
+                )}
+                {liveState?.dailyLossUsed !== undefined && liveState.dailyLossUsed > 0 && (
+                  <>
+                    <dt>Loss today</dt>
+                    <dd>
+                      <Pnl value={-liveState.dailyLossUsed} currency={liveState.currency} title="Realised plus floating loss since the broker's day began." />
                     </dd>
                   </>
                 )}

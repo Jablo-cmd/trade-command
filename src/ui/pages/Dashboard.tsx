@@ -101,7 +101,7 @@ export function Dashboard({ go }: { go: (r: Route) => void }) {
           {accounts.length === 0 && <span className="muted">No accounts.</span>}
         </div>
         <p className="muted small">
-          Live automation verified for {liveReady} of {accounts.length} account(s). No broker connector is installed in this build, so live execution is unavailable.
+          Firm rules verified for live automation on {liveReady} of {accounts.length} account(s). Live orders also need the MT5 connector running on your VPS.
         </p>
         <button className="btn btn-sm" onClick={() => go('compatibility')}>
           Review prop-firm rules

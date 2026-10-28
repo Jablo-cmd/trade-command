@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase } from '../state/supabaseConfig';
+import { LogoMark } from './Logo';
 
 /** Requires a Supabase session when Supabase is configured. Uses the anon key + RLS only. */
 export function AuthGate({ children }: { children: (session: Session) => ReactNode }) {
@@ -31,8 +32,11 @@ export function AuthGate({ children }: { children: (session: Session) => ReactNo
 
   return (
     <main className="auth">
-      <h1>Trade Command</h1>
-      <p className="muted">Sign in to your private workspace.</p>
+      <LogoMark size={76} className="auth-logo" />
+      <h1 className="wordmark wordmark-xl">
+        Trade <em>Command</em>
+      </h1>
+      <p className="muted auth-sub">Private trading operations</p>
       <form
         className="form card"
         onSubmit={(e) => {
