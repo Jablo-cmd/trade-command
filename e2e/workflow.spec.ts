@@ -163,11 +163,11 @@ test('profit shows in blue and loss in red, like MT5', async ({ page }) => {
   const pnl = page.locator('.pnl').first();
   await expect(pnl).toContainText('9.90 USD');
   await expect(pnl).toHaveClass(/pnl-neg/);
-  await expect(pnl).toHaveCSS('color', 'rgb(255, 82, 82)');
+  await expect(pnl).toHaveCSS('color', 'rgb(255, 107, 107)');
 
   // Price above entry → floating profit: 100 ticks × 1.00 × 0.33 lots = +33.00, in MT5 blue.
   await setQuote(page, '4081', '4081.2');
   await expect(pnl).toContainText('+33.00 USD');
   await expect(pnl).toHaveClass(/pnl-pos/);
-  await expect(pnl).toHaveCSS('color', 'rgb(74, 163, 255)');
+  await expect(pnl).toHaveCSS('color', 'rgb(102, 184, 255)');
 });

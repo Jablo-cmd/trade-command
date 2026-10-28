@@ -1,6 +1,6 @@
 // Minimal app-shell service worker. Network-first for navigation; cache-first for
 // hashed static assets. Never caches Supabase/API responses.
-const CACHE = 'trade-command-v2';
+const CACHE = 'trade-command-v3';
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png'])));
   self.skipWaiting();
