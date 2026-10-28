@@ -1,40 +1,43 @@
-/* Trade Command — "Obsidian Emerald".
-   Black with a green undertone, deep emerald light, champagne-gold hairlines and numerals.
-   Cormorant Garamond for display and figures, Manrope for everything you operate.
-   One committed dark identity; status colours stay clear of the brand greens and gold. */
+/* Trade Command — "Emerald Dominion".
+   Green leads: rich emerald backgrounds and surfaces, mint highlights. Black appears only where
+   it adds depth (header, bottom bar, input wells). Gold is a hairline, not a theme.
+   One clean sans-serif family (Plus Jakarta Sans) throughout.
+   Status colours stay clear of the brand greens; profit is MT5 blue, loss is red. */
 :root {
-  --bg: #030706;
-  --surface: #070f0c;
-  --surface-2: #0c1813;
-  --surface-3: #12231b;
-  --border: #15281f;
-  --hairline: rgb(217 182 106 / 0.16);
-  --hairline-strong: rgb(217 182 106 / 0.32);
-  --text: #ece9df;
-  --text-strong: #f8f4e6;
-  --muted: #8aa597;
-  --primary: #12b886;
-  --primary-strong: #3ddc9f;
-  --primary-ink: #021a12;
-  --accent: #d9b66a;
-  --accent-strong: #f0d890;
-  --accent-ink: #231900;
-  --ok: #7be0a8;
-  --warn: #eaa23b;
-  --bad: #f2737f;
-  --bad-ink: #2a0810;
-  --info: #62c6d6;
-  --sim: #c4a1f5;
-  --profit: #4aa3ff; /* MT5: profit is blue */
-  --loss: #ff5252; /* MT5: loss is red */
-  --buy: #3ddc9f;
-  --sell: #f0806f;
-  --on-strong: #031209;
-  --shadow: inset 0 1px 0 rgb(240 216 144 / 0.07), 0 12px 32px rgb(0 0 0 / 0.5);
-  --radius: 16px;
+  --bg: #052d22;
+  --surface: #0a4a36;
+  --surface-2: #0e5a42;
+  --surface-3: #127052;
+  --well: #03231a;
+  --border: #16664b;
+  --hairline: rgb(110 231 183 / 0.2);
+  --hairline-strong: rgb(110 231 183 / 0.38);
+  --text: #eafaf2;
+  --text-strong: #ffffff;
+  --muted: #a6d9c2;
+  --mint: #8ff0c9;
+  --focus: #8ff0c9;
+  --primary: #2ee6a6;
+  --primary-strong: #6ef2c0;
+  --primary-ink: #022a1d;
+  --accent: #e3c06a;
+  --accent-strong: #f4dc9a;
+  --ok: #c6f36b;
+  --warn: #ffc15e;
+  --bad: #ff8f98;
+  --bad-ink: #3a0710;
+  --info: #7fe3f5;
+  --sim: #dcb6ff;
+  --profit: #66b8ff; /* MT5: profit is blue */
+  --loss: #ff6b6b; /* MT5: loss is red */
+  --buy: #6ef2c0;
+  --sell: #ff9a85;
+  --on-strong: #022a1d;
+  --shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 12px 28px rgb(0 22 14 / 0.45);
+  --radius: 18px;
   --nav-h: 66px;
-  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-body);
   color-scheme: dark;
   font-family: var(--font-body);
   font-size: 16px;
@@ -48,10 +51,10 @@
 }
 body {
   margin: 0;
-  /* Emerald light falling from above, a faint champagne glow at the corner, then black. */
+  /* A full-bleed emerald field: bright at the top, settling into deep forest green. */
   background:
-    radial-gradient(90% 42% at 50% -8%, rgb(18 184 134 / 0.17) 0%, transparent 68%) no-repeat,
-    radial-gradient(55% 28% at 100% 0%, rgb(217 182 106 / 0.08) 0%, transparent 70%) no-repeat,
+    radial-gradient(100% 38% at 50% -6%, rgb(46 230 166 / 0.3) 0%, transparent 70%) no-repeat,
+    linear-gradient(180deg, #0b5a42 0%, #07402f 38%, #052d22 72%, #041f18 100%) no-repeat,
     var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -61,30 +64,29 @@ body {
 h1,
 h2 {
   font-family: var(--font-display);
-  font-variant-numeric: lining-nums;
   color: var(--text-strong);
   text-wrap: balance;
 }
 h1 {
-  font-size: 2.15rem;
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   margin: 0;
 }
 h2 {
-  font-size: 1.32rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 h3 {
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--mint);
   margin: 1.25rem 0 0.6rem;
 }
 a {
@@ -129,7 +131,7 @@ pre {
   gap: 0.75rem;
   padding: 0.6rem 1rem;
   padding-top: calc(0.6rem + env(safe-area-inset-top));
-  background: rgb(3 7 6 / 0.78);
+  background: rgb(2 26 19 / 0.82);
   backdrop-filter: blur(14px) saturate(1.2);
   border-bottom: 1px solid var(--hairline);
 }
@@ -147,26 +149,24 @@ pre {
 }
 .wordmark {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.38rem;
-  letter-spacing: 0.03em;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 .wordmark em {
-  font-style: italic;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  font-style: normal;
+  font-weight: 800;
+  background: linear-gradient(180deg, #a8f7d6, #2ee6a6);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 .topbar-title {
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -190,19 +190,19 @@ pre {
   border-bottom: 1px solid var(--border);
 }
 .banner strong {
-  letter-spacing: 0.14em;
-  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  font-size: 0.74rem;
 }
 .banner-sim {
-  background: color-mix(in srgb, var(--sim) 11%, var(--bg));
-  border-bottom-color: color-mix(in srgb, var(--sim) 28%, transparent);
+  background: color-mix(in srgb, var(--sim) 22%, #052d22);
+  border-bottom-color: color-mix(in srgb, var(--sim) 40%, transparent);
 }
 .banner-warn {
-  background: color-mix(in srgb, var(--warn) 12%, var(--bg));
+  background: color-mix(in srgb, var(--warn) 20%, #052d22);
   border-bottom-color: color-mix(in srgb, var(--warn) 30%, transparent);
 }
 .banner-bad {
-  background: color-mix(in srgb, var(--bad) 14%, var(--bg));
+  background: color-mix(in srgb, var(--bad) 24%, #052d22);
   border-bottom-color: color-mix(in srgb, var(--bad) 34%, transparent);
 }
 .error-banner {
@@ -220,7 +220,7 @@ pre {
   grid-template-columns: repeat(5, 1fr);
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgb(3 7 6 / 0.86);
+  background: rgb(2 26 19 / 0.9);
   backdrop-filter: blur(14px) saturate(1.2);
   border-top: 1px solid var(--hairline);
 }
@@ -232,20 +232,19 @@ pre {
   gap: 2px;
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.01em;
   min-height: 48px;
 }
 .bottom-nav a.active {
-  color: var(--accent-strong);
+  color: var(--primary-strong);
 }
 .bottom-nav a.active svg {
   padding: 3px 16px;
   box-sizing: content-box;
   border-radius: 999px;
-  background: rgb(217 182 106 / 0.13);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  background: rgb(46 230 166 / 0.2);
 }
 
 .page-head {
@@ -281,7 +280,7 @@ pre {
 
 /* ---- cards & lists ---- */
 .card {
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0) 38%), var(--surface);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0) 55%), var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.1rem;
@@ -333,7 +332,7 @@ pre {
   flex-direction: column;
   align-items: flex-start;
   padding: 1rem;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0) 45%), var(--surface);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0) 60%), var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -351,26 +350,26 @@ pre {
 }
 .stat-value {
   font-family: var(--font-display);
-  font-variant-numeric: lining-nums tabular-nums;
-  font-size: 2.5rem;
-  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.3rem;
+  font-weight: 800;
   line-height: 1;
-  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  letter-spacing: -0.03em;
+  background: linear-gradient(180deg, #ffffff, #b9f7dc);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 .stat-value small {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
+  font-weight: 700;
   -webkit-text-fill-color: var(--muted);
 }
 .stat-label {
-  margin-top: 0.45rem;
+  margin-top: 0.5rem;
   color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .chips {
@@ -523,10 +522,10 @@ pre {
   white-space: nowrap;
 }
 .table th {
-  color: var(--accent);
-  font-size: 0.66rem;
+  color: var(--mint);
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -631,11 +630,10 @@ pre {
 }
 .field label,
 legend {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #cfeee0;
 }
 fieldset {
   border: 1px solid var(--border);
@@ -649,7 +647,7 @@ textarea {
   font: inherit;
   font-size: 16px; /* prevents zoom on mobile */
   color: var(--text-strong);
-  background: #050c09;
+  background: var(--well);
   border: 1px solid var(--border);
   border-radius: 11px;
   padding: 0.6rem 0.8rem;
@@ -661,8 +659,8 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(217 182 106 / 0.16);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgb(143 240 201 / 0.22);
 }
 ::placeholder {
   color: color-mix(in srgb, var(--muted) 70%, transparent);
@@ -680,7 +678,7 @@ textarea:focus-visible,
 button:focus-visible,
 a:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .search {
@@ -759,7 +757,7 @@ summary:focus-visible {
 }
 .btn:hover:not(:disabled) {
   background: var(--surface-3);
-  border-color: var(--accent);
+  border-color: var(--focus);
 }
 .btn:active:not(:disabled) {
   transform: translateY(1px);
@@ -770,15 +768,15 @@ summary:focus-visible {
   font-size: 0.85rem;
 }
 .btn-primary {
-  background: linear-gradient(180deg, #1ccb95, #0b9a70);
-  border-color: rgb(255 255 255 / 0.22);
+  background: linear-gradient(180deg, #4af2b8, #19cc8c);
+  border-color: rgb(255 255 255 / 0.3);
   color: var(--primary-ink);
   font-weight: 700;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 8px 22px rgb(18 184 134 / 0.28);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 8px 22px rgb(46 230 166 / 0.3);
 }
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #2fe0aa, #10ad7f);
-  border-color: rgb(255 255 255 / 0.4);
+  background: linear-gradient(180deg, #6ef7c6, #2bdc9d);
+  border-color: rgb(255 255 255 / 0.5);
 }
 .btn-danger {
   background: linear-gradient(180deg, #f58a94, #e0505f);
@@ -846,26 +844,22 @@ summary:focus-visible {
   filter: drop-shadow(0 10px 30px rgb(18 184 134 / 0.4));
 }
 .wordmark-xl {
-  margin: 1.1rem 0 0.3rem;
-  font-size: 2.3rem;
-  letter-spacing: 0.04em;
+  margin: 1.1rem 0 0.35rem;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
 }
 .auth-sub {
   margin: 0 0 1.6rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-size: 0.92rem;
+  font-weight: 500;
 }
 .auth .form {
   text-align: left;
 }
 .auth .form label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #cfeee0;
 }
 
 @media (min-width: 640px) {
@@ -940,9 +934,8 @@ summary:focus-visible {
   line-height: 1.2;
 }
 .pnl-block small {
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 .sr-only {
   position: absolute;
