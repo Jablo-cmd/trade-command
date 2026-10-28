@@ -945,3 +945,16 @@ summary:focus-visible {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.sim-tag {
+  width: fit-content;
+  margin: 6px 16px 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--line, rgba(143, 224, 201, 0.3));
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--mint, #8fe0c9);
+  opacity: 0.8;
+}

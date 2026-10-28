@@ -35,8 +35,8 @@ function ModeBanner() {
   }
   if (store.provider.info.simulated) {
     return (
-      <div className="banner banner-sim" role="status">
-        <strong>SIMULATION</strong> — no broker is connected; no real orders are placed.
+      <div className="sim-tag" role="status" title="No broker is connected; no real orders are placed.">
+        SIMULATION
       </div>
     );
   }

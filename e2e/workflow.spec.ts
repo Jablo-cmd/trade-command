@@ -27,9 +27,8 @@ async function noHorizontalOverflow(page: Page) {
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test('dashboard shows simulation banner and empty state', async ({ page }) => {
+test('dashboard shows simulation tag and empty state', async ({ page }) => {
   await expect(page.getByText('SIMULATION', { exact: true })).toBeVisible();
-  await expect(page.getByText('no real orders are placed')).toBeVisible();
   await expect(page.getByText('No trading accounts yet')).toBeVisible();
   await expect(page.getByText('Accounts configured')).toBeVisible();
   await noHorizontalOverflow(page);
