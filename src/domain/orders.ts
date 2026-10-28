@@ -5,7 +5,7 @@
  * reported by the execution provider change filled volume and create positions.
  */
 import { normalize } from './price';
-import { lossAtStop, type ExposureSummary, fxFactor } from './risk';
+import { lossAtStop, profitAt, type ExposureSummary, fxFactor } from './risk';
 import { computeStopLoss, resolveTakeProfit } from './strategy';
 import type { Fill, InstrumentSpec, MasterSignal, Order, OrderState, Position, TradingAccount } from './types';
 
@@ -141,4 +141,23 @@ export function computeExposure(
     pendingRisk += lossAtStop(o.limitPrice, o.stopLoss, rem, spec, fx) + (spec.commissionPerLot ?? 0) * rem;
   }
   return { openRisk: normalize(openRisk, 0.01), pendingRisk: normalize(pendingRisk, 0.01), errors };
+}
+
+/**
+ * Profit/loss of a position in account currency: realised at its close price, or floating at
+ * `price` while open (BUY values at the bid, SELL at the ask; the caller passes the right side).
+ * Undefined when the broker spec, currency conversion or price is unavailable — never guessed.
+ */
+export function positionProfit(
+  pos: Pick<Position, 'direction' | 'entryPrice' | 'volume' | 'status' | 'closePrice'>,
+  price: number | undefined,
+  account: TradingAccount,
+  spec: InstrumentSpec | undefined,
+  now: Date,
+): number | undefined {
+  const exit = pos.status === 'closed' ? pos.closePrice : price;
+  if (exit === undefined || !spec) return undefined;
+  const fx = fxFactor(account, spec, now).factor;
+  if (fx === undefined) return undefined;
+  return profitAt(pos.direction, pos.entryPrice, exit, pos.volume, spec, fx);
 }

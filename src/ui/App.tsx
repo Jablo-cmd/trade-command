@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LogoMark } from './Logo';
 import { ROUTES, useRoute, type Route } from './router';
 import { useAppState, useStoreInstance } from './storeContext';
 import { Dashboard } from './pages/Dashboard';
@@ -102,10 +103,10 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <a href="#/dashboard" className="brand" aria-label="Trade Command home">
-          <span className="brand-mark" aria-hidden>
-            TC
+          <LogoMark size={34} className="brand-mark" />
+          <span className="wordmark">
+            Trade <em>Command</em>
           </span>
-          <span>Trade Command</span>
         </a>
         <span className="topbar-title">{title}</span>
       </header>

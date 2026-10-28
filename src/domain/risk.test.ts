@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NOW, NOW_ISO, account, goldSpec } from '../test/fixtures';
-import { calculatePositionSize, lossAtStop } from './risk';
+import { calculatePositionSize, lossAtStop, profitAt } from './risk';
 
 const noExposure = { openRisk: 0, pendingRisk: 0 };
 
@@ -167,5 +167,20 @@ describe('instrument specification checks', () => {
   });
   it('computes loss at stop for both directions', () => {
     expect(lossAtStop(4080, 4095, 0.5, goldSpec(), 1)).toBe(750);
+  });
+});
+
+describe('profit and loss', () => {
+  it('BUY gains when price rises, loses when it falls (MT5 tick-value maths)', () => {
+    expect(profitAt('BUY', 4080, 4083, 0.33, goldSpec(), 1)).toBe(99);
+    expect(profitAt('BUY', 4080, 4065, 0.33, goldSpec(), 1)).toBe(-495);
+  });
+  it('SELL is the mirror image', () => {
+    expect(profitAt('SELL', 4080, 4083, 0.33, goldSpec(), 1)).toBe(-99);
+    expect(profitAt('SELL', 4080, 4077, 0.33, goldSpec(), 1)).toBe(99);
+  });
+  it('applies currency conversion and returns 0 (not -0) at break-even', () => {
+    expect(profitAt('BUY', 4080, 4083, 1, goldSpec(), 0.9)).toBe(270);
+    expect(Object.is(profitAt('BUY', 4080, 4080, 1, goldSpec(), 1), 0)).toBe(true);
   });
 });

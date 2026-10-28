@@ -146,3 +146,28 @@ test('bottom navigation reaches every section', async ({ page }) => {
     await noHorizontalOverflow(page);
   }
 });
+
+test('profit shows in blue and loss in red, like MT5', async ({ page }) => {
+  await loadDemo(page);
+  await setQuote(page, '4080.3', '4080.5');
+  await page.goto('/#/signal');
+  await page.getByRole('button', { name: 'New signal' }).click();
+  await page.getByLabel('Reference entry price').fill('4080');
+  await page.getByRole('button', { name: 'Create signal & preview' }).click();
+  await page.getByRole('button', { name: /Authorise automatic groups/ }).click();
+  await page.getByRole('button', { name: 'Submit to simulator' }).click();
+  await expect(page.getByText('5 already submitted')).toBeVisible();
+
+  // Group A fills at 4080. Price below entry → floating loss: 30 ticks × 1.00 × 0.33 lots = −9.90.
+  await setQuote(page, '4079.7', '4079.9');
+  const pnl = page.locator('.pnl').first();
+  await expect(pnl).toContainText('9.90 USD');
+  await expect(pnl).toHaveClass(/pnl-neg/);
+  await expect(pnl).toHaveCSS('color', 'rgb(255, 82, 82)');
+
+  // Price above entry → floating profit: 100 ticks × 1.00 × 0.33 lots = +33.00, in MT5 blue.
+  await setQuote(page, '4081', '4081.2');
+  await expect(pnl).toContainText('+33.00 USD');
+  await expect(pnl).toHaveClass(/pnl-pos/);
+  await expect(pnl).toHaveCSS('color', 'rgb(74, 163, 255)');
+});

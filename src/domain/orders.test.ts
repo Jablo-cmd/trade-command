@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NOW, NOW_ISO, STRATEGY, account, goldSpec } from '../test/fixtures';
-import { applyFill, averageFillPrice, canTransition, computeExposure, targetLevelsForFills, transitionOrder } from './orders';
+import { applyFill, averageFillPrice, canTransition, computeExposure, positionProfit, targetLevelsForFills, transitionOrder } from './orders';
 import type { MasterSignal, Order, Position } from './types';
 
 function order(o: Partial<Order> = {}): Order {
@@ -111,5 +111,18 @@ describe('exposure', () => {
   it('reports an error when exposure cannot be valued', () => {
     const e = computeExposure(account(), [order()], [], () => undefined, NOW);
     expect(e.errors).toHaveLength(1);
+  });
+});
+
+describe('position profit', () => {
+  const base = { direction: 'BUY' as const, entryPrice: 4080, volume: 0.2 };
+  it('floating at the given price while open; realised at the close price once closed', () => {
+    expect(positionProfit({ ...base, status: 'open' }, 4083, account(), goldSpec(), NOW)).toBe(60);
+    expect(positionProfit({ ...base, status: 'closed', closePrice: 4065 }, 4100, account(), goldSpec(), NOW)).toBe(-300);
+  });
+  it('is undefined without a price, a spec, or a currency rate — never guessed', () => {
+    expect(positionProfit({ ...base, status: 'open' }, undefined, account(), goldSpec(), NOW)).toBeUndefined();
+    expect(positionProfit({ ...base, status: 'open' }, 4083, account(), undefined, NOW)).toBeUndefined();
+    expect(positionProfit({ ...base, status: 'open' }, 4083, account({ currency: 'EUR' }), goldSpec(), NOW)).toBeUndefined();
   });
 });

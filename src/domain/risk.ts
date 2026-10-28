@@ -70,6 +70,17 @@ export function lossAtStop(entry: number, stopLoss: number, volume: number, spec
   return ticks * spec.tickValue * volume * fx;
 }
 
+/**
+ * Signed profit (positive) or loss (negative) of `volume` lots moving from `entry` to `exit`,
+ * in account currency. Uses the broker's tick size/value, like MT5 does. Commission and swap
+ * are not included.
+ */
+export function profitAt(direction: 'BUY' | 'SELL', entry: number, exit: number, volume: number, spec: InstrumentSpec, fx: number): number {
+  const move = direction === 'BUY' ? exit - entry : entry - exit;
+  const value = (move / spec.tickSize) * spec.tickValue * volume * fx;
+  return Math.round(value * 100) / 100 || 0; // `|| 0` turns -0 into 0
+}
+
 export function validateSpec(spec: InstrumentSpec | undefined): string[] {
   if (!spec) return ['Instrument specification is missing for this account/server.'];
   const errs: string[] = [];

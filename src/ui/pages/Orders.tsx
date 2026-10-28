@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { ORDER_STATE_LABELS, isWorking } from '../../domain/orders';
+import { useEffect, useState } from 'react';
+import { ORDER_STATE_LABELS, isWorking, positionProfit } from '../../domain/orders';
 import type { Order, Position } from '../../domain/types';
-import { Badge, Card, EmptyState, Field, NumberInput, PageHeader, Toggle, fmtTime, useConfirm } from '../components';
+import { Badge, Card, EmptyState, Field, NumberInput, PageHeader, Pnl, Toggle, fmtTime, useConfirm } from '../components';
 import { ORDER_TONE } from '../labels';
 import { useAction, useAppState, useStoreInstance } from '../storeContext';
 
@@ -102,6 +102,28 @@ export function Orders() {
   const open = positions.filter((p) => p.status === 'open');
   const closed = positions.filter((p) => p.status === 'closed');
 
+  // Current quotes for open positions: the simulator's typed quote, or the live connector's tick.
+  const [quotes, setQuotes] = useState<Record<string, { bid?: number; ask?: number }>>({});
+  const symbols = [...new Set(open.map((p) => p.symbol))].join(',');
+  useEffect(() => {
+    let live = true;
+    const load = () =>
+      void Promise.all(symbols.split(',').filter(Boolean).map(async (s) => [s, await store.market(s)] as const)).then((rows) => live && setQuotes(Object.fromEntries(rows)));
+    load();
+    const t = store.provider.info.simulated ? undefined : setInterval(load, 5000);
+    return () => {
+      live = false;
+      if (t) clearInterval(t);
+    };
+  }, [store, symbols, data.execution.positions, data.settings.provider]);
+  const [now] = useState(() => new Date());
+  const profitOf = (p: Position): { value: number | undefined; currency: string } => {
+    const acc = data.accounts.find((a) => a.id === p.accountId);
+    const q = quotes[p.symbol];
+    const price = p.direction === 'BUY' ? q?.bid : q?.ask;
+    return { value: acc ? positionProfit(p, price, acc, store.specForAccount(p.accountId, p.symbol), now) : undefined, currency: acc?.currency ?? '' };
+  };
+
   const orderRow = (o: Order) => (
     <li key={o.id} className="order-row">
       <div>
@@ -151,6 +173,10 @@ export function Orders() {
       </div>
       <div className="order-side">
         <Badge tone={p.status === 'open' ? 'ok' : 'neutral'}>{p.status === 'open' ? 'Open' : 'Closed'}</Badge>
+        <div className="pnl-block">
+          <Pnl {...profitOf(p)} title={p.status === 'open' ? 'Floating profit/loss at the current quote, before commission and swap.' : 'Realised profit/loss at the close price, before commission and swap.'} />
+          <small className="muted">{p.status === 'open' ? 'floating' : 'realised'}</small>
+        </div>
       </div>
     </li>
   );
